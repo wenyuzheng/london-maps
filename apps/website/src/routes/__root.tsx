@@ -31,7 +31,7 @@ export const Route = createRootRouteWithContext()({
         links: [
             {
                 rel: 'icon',
-                href: '/favicon.ico'
+                href: 'data:,'
             },
             { rel: 'stylesheet', href: appCss }
         ]
@@ -50,7 +50,7 @@ function RootComponent() {
 
 function RootDocument({ children }: { readonly children: React.ReactNode }) {
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
             <head>
                 <HeadContent />
             </head>

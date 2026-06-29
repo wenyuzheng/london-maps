@@ -12,11 +12,6 @@ export type HelloBusMessage = BusMessage & {
     state?: BusSharedState;
 };
 
-export type ControlSliderMessage = BusMessage & {
-    type: 'control/slider';
-    value: number;
-};
-
 export type ScreenSegmentSelectionMessage = BusMessage & {
     type: 'screen/segment-selection';
     indexes: number[];
@@ -52,13 +47,6 @@ export type ScreenMapStyleMessage = BusMessage & {
     style: MapStyleName;
 };
 
-export type ArcSegment = {
-    id: string;
-    start: [number, number];
-    end: [number, number];
-    weight: number;
-};
-
 export type EngineRole = 'screen' | 'control';
 
 export type EngineConnectionState = 'idle' | 'connecting' | 'open' | 'closed' | 'error';
@@ -84,8 +72,6 @@ export const createInitialEngineStoreState = (role: EngineRole): EngineStoreStat
 });
 
 export type ControlStoreState = EngineStoreState & {
-    sliderValue: number;
-    isSliderInteracting: boolean;
     selectedCity: MapCity;
     selectedSegmentIndexes: number[];
     currentMapView: ScreenMapViewState;
@@ -94,9 +80,7 @@ export type ControlStoreState = EngineStoreState & {
 
 export type ScreenStoreState = EngineStoreState & {
     mapView: ScreenMapViewState;
-    arcSegments: ArcSegment[];
     selectedSegmentIndexes: number[];
-    isArcSegmentsLoading: boolean;
     mapStyle: MapStyleName;
 };
 
@@ -112,8 +96,6 @@ const INITIAL_MAP_STYLE: MapStyleName = 'satellite';
 
 export const createInitialControlStoreState = (): ControlStoreState => ({
     ...createInitialEngineStoreState('control'),
-    sliderValue: 59,
-    isSliderInteracting: false,
     selectedCity: 'london',
     selectedSegmentIndexes: [],
     currentMapView: INITIAL_MAP_VIEW,
@@ -123,8 +105,6 @@ export const createInitialControlStoreState = (): ControlStoreState => ({
 export const createInitialScreenStoreState = (): ScreenStoreState => ({
     ...createInitialEngineStoreState('screen'),
     mapView: INITIAL_MAP_VIEW,
-    arcSegments: [],
     selectedSegmentIndexes: [],
-    isArcSegmentsLoading: false,
     mapStyle: INITIAL_MAP_STYLE
 });
