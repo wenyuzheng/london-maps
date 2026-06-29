@@ -6,42 +6,28 @@ export const CITY_MAP_VIEWS: Record<MapCity, ScreenMapViewState> = {
     london: {
         longitude: -0.1749,
         latitude: 51.4988,
-        zoom: 9,
+        zoom: 15.5,
         bearing: 0,
         pitch: 0
     },
     paris: {
-        longitude: 2.2945,
-        latitude: 48.8584,
-        zoom: 9,
+        longitude: 2.3522,
+        latitude: 48.8566,
+        zoom: 15.5,
         bearing: 0,
         pitch: 0
     },
-    berlin: {
-        longitude: 13.405,
-        latitude: 52.52,
-        zoom: 9,
+    'hong-kong': {
+        longitude: 114.1694,
+        latitude: 22.2969,
+        zoom: 15.5,
         bearing: 0,
         pitch: 0
     },
-    madrid: {
-        longitude: -3.7038,
-        latitude: 40.4168,
-        zoom: 9,
-        bearing: 0,
-        pitch: 0
-    },
-    rome: {
-        longitude: 12.4964,
-        latitude: 41.9028,
-        zoom: 9,
-        bearing: 0,
-        pitch: 0
-    },
-    amsterdam: {
-        longitude: 4.9041,
-        latitude: 52.3676,
-        zoom: 9,
+    munich: {
+        longitude: 11.5755,
+        latitude: 48.1374,
+        zoom: 15.5,
         bearing: 0,
         pitch: 0
     }

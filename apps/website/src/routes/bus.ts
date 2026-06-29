@@ -4,6 +4,7 @@ import { defineHooks } from 'crossws';
 import type {
     BusMessage,
     BusSharedState,
+    ScreenMapStyleMessage,
     ScreenMapViewMessage,
     ScreenSegmentSelectionMessage
 } from '../lib/realtime';
@@ -14,8 +15,9 @@ import { isMapCity } from '../lib/realtime/map-cities';
 // join late without waiting for another control interaction.
 const busSharedState: BusSharedState = {
     city: 'london',
-    zoom: 9,
-    selectedSegmentIndexes: []
+    zoom: 15.5,
+    selectedSegmentIndexes: [],
+    mapStyle: 'satellite'
 };
 
 const hooks = defineHooks({
@@ -89,6 +91,14 @@ function updateBusSharedState(payload: Partial<BusMessage>) {
             .filter((value): value is number => Number.isInteger(value) && value >= 0)
             .slice()
             .sort((a, b) => a - b);
+        return;
+    }
+
+    if (payload.type === 'screen/map-style') {
+        const message = payload as Partial<ScreenMapStyleMessage>;
+        if (message.style === 'voyager' || message.style === 'satellite') {
+            busSharedState.mapStyle = message.style;
+        }
     }
 }
 

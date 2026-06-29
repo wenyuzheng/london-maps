@@ -5,8 +5,10 @@ import { DefaultNotFound } from './components/default-not-found';
 import { routeTree } from './routeTree.gen';
 
 export function getRouter() {
+    const basepath = import.meta.env.BASE_URL;
     const router = createRouter({
         routeTree,
+        basepath,
         defaultPreload: 'intent',
         defaultErrorComponent: DefaultCatchBoundary,
         defaultNotFoundComponent: DefaultNotFound,

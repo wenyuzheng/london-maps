@@ -44,7 +44,8 @@ export abstract class BusEngine<TStoreState extends EngineStoreState = EngineSto
 
         // Match ws/wss to current page protocol.
         const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const url = `${protocol}://${window.location.host}/bus`;
+        const basePath = import.meta.env.BASE_URL.replace(/\/$/, '') || '';
+        const url = `${protocol}://${window.location.host}${basePath}/bus`;
         const socket = new WebSocket(url);
         this.socket = socket;
 

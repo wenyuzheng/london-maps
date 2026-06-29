@@ -22,12 +22,15 @@ export type ScreenSegmentSelectionMessage = BusMessage & {
     indexes: number[];
 };
 
-export type MapCity = 'london' | 'paris' | 'berlin' | 'madrid' | 'rome' | 'amsterdam';
+export type MapCity = 'london' | 'paris' | 'hong-kong' | 'munich';
+
+export type MapStyleName = 'voyager' | 'satellite';
 
 export type BusSharedState = {
     city: MapCity;
     zoom: number;
     selectedSegmentIndexes: number[];
+    mapStyle: MapStyleName;
 };
 
 export type ScreenMapViewState = {
@@ -42,6 +45,11 @@ export type ScreenMapViewMessage = BusMessage & {
     type: 'screen/map-view';
     view: Partial<ScreenMapViewState>;
     city?: MapCity;
+};
+
+export type ScreenMapStyleMessage = BusMessage & {
+    type: 'screen/map-style';
+    style: MapStyleName;
 };
 
 export type ArcSegment = {
@@ -80,6 +88,8 @@ export type ControlStoreState = EngineStoreState & {
     isSliderInteracting: boolean;
     selectedCity: MapCity;
     selectedSegmentIndexes: number[];
+    currentMapView: ScreenMapViewState;
+    mapStyle: MapStyleName;
 };
 
 export type ScreenStoreState = EngineStoreState & {
@@ -87,26 +97,34 @@ export type ScreenStoreState = EngineStoreState & {
     arcSegments: ArcSegment[];
     selectedSegmentIndexes: number[];
     isArcSegmentsLoading: boolean;
+    mapStyle: MapStyleName;
 };
+
+const INITIAL_MAP_VIEW: ScreenMapViewState = {
+    longitude: -0.1749,
+    latitude: 51.4988,
+    zoom: 15.5,
+    bearing: 0,
+    pitch: 0
+};
+
+const INITIAL_MAP_STYLE: MapStyleName = 'satellite';
 
 export const createInitialControlStoreState = (): ControlStoreState => ({
     ...createInitialEngineStoreState('control'),
-    sliderValue: 25,
+    sliderValue: 59,
     isSliderInteracting: false,
     selectedCity: 'london',
-    selectedSegmentIndexes: []
+    selectedSegmentIndexes: [],
+    currentMapView: INITIAL_MAP_VIEW,
+    mapStyle: INITIAL_MAP_STYLE
 });
 
 export const createInitialScreenStoreState = (): ScreenStoreState => ({
     ...createInitialEngineStoreState('screen'),
-    mapView: {
-        longitude: -0.1749,
-        latitude: 51.4988,
-        zoom: 9,
-        bearing: 0,
-        pitch: 0
-    },
+    mapView: INITIAL_MAP_VIEW,
     arcSegments: [],
     selectedSegmentIndexes: [],
-    isArcSegmentsLoading: false
+    isArcSegmentsLoading: false,
+    mapStyle: INITIAL_MAP_STYLE
 });

@@ -5,6 +5,8 @@ import type {
     ArcSegment,
     BusMessage,
     HelloBusMessage,
+    MapStyleName,
+    ScreenMapStyleMessage,
     ScreenMapViewMessage,
     ScreenMapViewState,
     ScreenSegmentSelectionMessage,
@@ -43,6 +45,13 @@ export class ScreenEngine extends BusEngine<ScreenStoreState> {
                 ...view
             }
         }));
+    }
+
+    setMapStyle(style: MapStyleName) {
+        this.store.setState((prev) => {
+            if (prev.mapStyle === style) return prev;
+            return { ...prev, mapStyle: style };
+        });
     }
 
     async ensureArcSegmentsLoaded() {
@@ -84,6 +93,14 @@ export class ScreenEngine extends BusEngine<ScreenStoreState> {
             return;
         }
 
+        if (message.type === 'screen/map-style') {
+            const styleMessage = message as ScreenMapStyleMessage;
+            if (styleMessage.style === 'voyager' || styleMessage.style === 'satellite') {
+                this.setMapStyle(styleMessage.style);
+            }
+            return;
+        }
+
         if (message.type === 'screen/segment-selection') {
             const segmentSelectionMessage = message as ScreenSegmentSelectionMessage;
             this.applySegmentSelection(segmentSelectionMessage.indexes);
@@ -100,6 +117,9 @@ export class ScreenEngine extends BusEngine<ScreenStoreState> {
             view: { zoom: hello.state.zoom }
         });
         this.applySegmentSelection(hello.state.selectedSegmentIndexes);
+        if (hello.state.mapStyle === 'voyager' || hello.state.mapStyle === 'satellite') {
+            this.setMapStyle(hello.state.mapStyle);
+        }
     }
 
     private applyMapViewMessage(mapViewMessage: ScreenMapViewMessage) {

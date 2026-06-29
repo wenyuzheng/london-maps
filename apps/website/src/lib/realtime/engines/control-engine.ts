@@ -1,6 +1,5 @@
 import { throttle } from '@tanstack/pacer';
 
-import { loadArcSegmentsDataset } from '../arc-segments';
 import { getCityMapView, isMapCity } from '../map-cities';
 import { controlStore } from '../stores/control-store';
 import type {
@@ -9,7 +8,10 @@ import type {
     ControlStoreState,
     HelloBusMessage,
     MapCity,
+    MapStyleName,
+    ScreenMapStyleMessage,
     ScreenMapViewMessage,
+    ScreenMapViewState,
     ScreenSegmentSelectionMessage
 } from '../types';
 import { BusEngine } from './bus-engine';
@@ -18,13 +20,8 @@ const SLIDER_BROADCAST_WAIT_MS = 100;
 const SLIDER_MIN = 0;
 const SLIDER_MAX = 100;
 const MAP_ZOOM_MIN = 6;
-const MAP_ZOOM_MAX = 18;
-const DEFAULT_SHUFFLE_SELECTION_COUNT = 24;
-
+const MAP_ZOOM_MAX = 22;
 export class ControlEngine extends BusEngine<ControlStoreState> {
-    // Cached once loaded to avoid repeated dataset fetches from the control route.
-    private segmentCount: number | null = null;
-
     // Slider moves can emit many events per second; throttle keeps interaction smooth locally
     // while reducing websocket chatter for all connected peers.
     private readonly broadcastSliderValueThrottled = throttle(
@@ -58,6 +55,18 @@ export class ControlEngine extends BusEngine<ControlStoreState> {
         }
     );
 
+    // Gesture moves fire at 60fps; throttle to ~15fps before hitting the bus.
+    private readonly broadcastGestureViewThrottled = throttle(
+        (view: ScreenMapViewState) => {
+            this.send({
+                type: 'screen/map-view',
+                view,
+                peerId: this.getPeerId() ?? undefined
+            });
+        },
+        { wait: 66, leading: true, trailing: true }
+    );
+
     private constructor() {
         super('control', controlStore);
     }
@@ -87,63 +96,62 @@ export class ControlEngine extends BusEngine<ControlStoreState> {
 
     setSliderValue(value: number) {
         const clampedValue = this.clampSliderValue(value);
+        const newZoom = this.zoomFromSlider(clampedValue);
 
         this.store.setState((prev) => {
             if (prev.sliderValue === clampedValue) return prev;
             return {
                 ...prev,
-                sliderValue: clampedValue
+                sliderValue: clampedValue,
+                currentMapView: { ...prev.currentMapView, zoom: newZoom }
             };
         });
 
         this.broadcastSliderValueThrottled(clampedValue);
-        // Slider value is the source-of-truth input for zoom UX in this demo.
-        this.broadcastMapZoomThrottled(this.zoomFromSlider(clampedValue));
+        this.broadcastMapZoomThrottled(newZoom);
     }
 
     selectCity(city: MapCity) {
-        let hasChanged = false;
-        this.store.setState((prev) => {
-            if (prev.selectedCity === city) return prev;
-            hasChanged = true;
-            return {
-                ...prev,
-                selectedCity: city
-            };
-        });
+        if (this.store.state.selectedCity === city) return;
 
-        if (!hasChanged) return;
+        const nextView: ScreenMapViewState = getCityMapView(city);
+        const nextSliderValue = this.clampSliderValue(this.sliderFromZoom(nextView.zoom));
 
-        // Broadcast full target view when city changes so all screens jump to the same anchor.
+        this.store.setState((prev) => ({
+            ...prev,
+            selectedCity: city,
+            sliderValue: nextSliderValue,
+            currentMapView: nextView
+        }));
+
         this.send({
             type: 'screen/map-view',
             city,
-            view: {
-                ...getCityMapView(city),
-                zoom: this.zoomFromSlider(this.store.state.sliderValue)
-            },
+            view: nextView,
             peerId: this.getPeerId() ?? undefined
         });
     }
 
-    async shuffleSegments() {
-        // Demo helper: choose a random subset for immediate visual feedback.
-        const segmentCount = await this.ensureSegmentCount();
-        if (segmentCount <= 0) return;
-
-        const targetCount = Math.min(DEFAULT_SHUFFLE_SELECTION_COUNT, segmentCount);
-        const indexes = this.pickRandomIndexes(segmentCount, targetCount);
-
-        this.store.setState((prev) => ({
-            ...prev,
-            selectedSegmentIndexes: indexes
-        }));
-
+    setMapStyle(style: MapStyleName) {
+        this.store.setState((prev) => {
+            if (prev.mapStyle === style) return prev;
+            return { ...prev, mapStyle: style };
+        });
         this.send({
-            type: 'screen/segment-selection',
-            indexes,
+            type: 'screen/map-style',
+            style,
             peerId: this.getPeerId() ?? undefined
         });
+    }
+
+    applyGestureView(view: ScreenMapViewState) {
+        const sliderValue = this.clampSliderValue(this.sliderFromZoom(view.zoom));
+        this.store.setState((prev) => ({
+            ...prev,
+            currentMapView: view,
+            sliderValue
+        }));
+        this.broadcastGestureViewThrottled(view);
     }
 
     protected override onMessage(message: BusMessage) {
@@ -178,16 +186,41 @@ export class ControlEngine extends BusEngine<ControlStoreState> {
                         ? this.sliderFromZoom(mapViewMessage.view.zoom)
                         : prev.sliderValue;
 
-                if (prev.selectedCity === nextCity && prev.sliderValue === nextSliderValue) {
-                    return prev;
+                // Rebuild currentMapView: city preset first, then field-by-field patch from view.
+                let nextView = prev.currentMapView;
+                if (isMapCity(mapViewMessage.city)) {
+                    nextView = { ...nextView, ...getCityMapView(mapViewMessage.city) };
+                }
+                if (mapViewMessage.view) {
+                    const v = mapViewMessage.view;
+                    nextView = {
+                        longitude:
+                            typeof v.longitude === 'number' ? v.longitude : nextView.longitude,
+                        latitude: typeof v.latitude === 'number' ? v.latitude : nextView.latitude,
+                        zoom: typeof v.zoom === 'number' ? v.zoom : nextView.zoom,
+                        bearing: typeof v.bearing === 'number' ? v.bearing : nextView.bearing,
+                        pitch: typeof v.pitch === 'number' ? v.pitch : nextView.pitch
+                    };
                 }
 
                 return {
                     ...prev,
                     selectedCity: nextCity,
-                    sliderValue: nextSliderValue
+                    sliderValue: nextSliderValue,
+                    currentMapView: nextView
                 };
             });
+            return;
+        }
+
+        if (message.type === 'screen/map-style') {
+            const styleMessage = message as ScreenMapStyleMessage;
+            if (styleMessage.style === 'voyager' || styleMessage.style === 'satellite') {
+                this.store.setState((prev) => {
+                    if (prev.mapStyle === styleMessage.style) return prev;
+                    return { ...prev, mapStyle: styleMessage.style };
+                });
+            }
             return;
         }
 
@@ -223,18 +256,21 @@ export class ControlEngine extends BusEngine<ControlStoreState> {
                       .slice()
                       .sort((a, b) => a - b)
                 : prev.selectedSegmentIndexes;
-            if (
-                prev.selectedCity === nextCity &&
-                prev.sliderValue === nextSliderValue &&
-                arraysEqual(prev.selectedSegmentIndexes, nextSelectedIndexes)
-            ) {
-                return prev;
-            }
+            const nextMapView: ScreenMapViewState = {
+                ...getCityMapView(nextCity),
+                zoom: state.zoom
+            };
+            const nextMapStyle =
+                state.mapStyle === 'voyager' || state.mapStyle === 'satellite'
+                    ? state.mapStyle
+                    : prev.mapStyle;
             return {
                 ...prev,
                 selectedCity: nextCity,
                 sliderValue: nextSliderValue,
-                selectedSegmentIndexes: nextSelectedIndexes
+                selectedSegmentIndexes: nextSelectedIndexes,
+                currentMapView: nextMapView,
+                mapStyle: nextMapStyle
             };
         });
     }
@@ -254,30 +290,6 @@ export class ControlEngine extends BusEngine<ControlStoreState> {
         const clampedZoom = Math.min(MAP_ZOOM_MAX, Math.max(MAP_ZOOM_MIN, zoom));
         const normalized = (clampedZoom - MAP_ZOOM_MIN) / (MAP_ZOOM_MAX - MAP_ZOOM_MIN);
         return this.clampSliderValue(normalized * (SLIDER_MAX - SLIDER_MIN) + SLIDER_MIN);
-    }
-
-    private async ensureSegmentCount() {
-        if (this.segmentCount !== null) return this.segmentCount;
-        if (typeof window === 'undefined') return 0;
-
-        const payload = await loadArcSegmentsDataset();
-        if (!payload) {
-            // Soft-fail: control features should keep working even if optional data fetch fails.
-            return 0;
-        }
-
-        this.segmentCount = payload.length;
-        return this.segmentCount;
-    }
-
-    private pickRandomIndexes(maxExclusive: number, count: number) {
-        // Fisher-Yates shuffle for unbiased random subset.
-        const pool = Array.from({ length: maxExclusive }, (_, index) => index);
-        for (let i = pool.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [pool[i], pool[j]] = [pool[j], pool[i]];
-        }
-        return pool.slice(0, count).sort((a, b) => a - b);
     }
 }
 

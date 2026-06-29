@@ -7,11 +7,12 @@ import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
+    base: process.env.VITE_BASE_PATH ?? '/',
     resolve: {
         tsconfigPaths: true
     },
     server: {
-        port: 5780,
+        port: 5781,
         watch: {
             usePolling: true,
             interval: 100
