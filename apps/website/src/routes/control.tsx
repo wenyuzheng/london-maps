@@ -177,9 +177,9 @@ function ControlPage() {
                                 or
                             </div>
                             <button
-                                onClick={() => controlEngine.setMapStyle('voyager')}
+                                onClick={() => controlEngine.setMapStyle('topo')}
                                 className={`cursor-pointer rounded-lg px-8 py-4 text-2xl font-bold text-white transition-colors ${
-                                    mapStyle === 'voyager'
+                                    mapStyle === 'topo'
                                         ? 'bg-green-500 hover:bg-green-600'
                                         : 'bg-blue-600 hover:bg-blue-700'
                                 }`}

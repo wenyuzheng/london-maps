@@ -7,7 +7,7 @@ import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
-    base: process.env.VITE_BASE_PATH ?? '/',
+    base: process.env.BASE_PATH ?? '/',
     resolve: {
         tsconfigPaths: true
     },
@@ -31,7 +31,8 @@ export default defineConfig({
         tanstackStart(),
         // https://tanstack.com/start/latest/docs/framework/react/guide/hosting
         nitro({
-            features: { websocket: true }
+            features: { websocket: true },
+            baseURL: process.env.BASE_PATH ?? '/'
         }),
         viteReact(),
         // https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#react-compiler

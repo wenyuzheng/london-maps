@@ -19,7 +19,7 @@ export type ScreenSegmentSelectionMessage = BusMessage & {
 
 export type MapCity = 'london' | 'paris' | 'hong-kong' | 'munich';
 
-export type MapStyleName = 'voyager' | 'satellite';
+export type MapStyleName = 'topo' | 'satellite';
 
 export type BusSharedState = {
     city: MapCity;

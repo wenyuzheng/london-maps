@@ -96,7 +96,7 @@ function updateBusSharedState(payload: Partial<BusMessage>) {
 
     if (payload.type === 'screen/map-style') {
         const message = payload as Partial<ScreenMapStyleMessage>;
-        if (message.style === 'voyager' || message.style === 'satellite') {
+        if (message.style === 'topo' || message.style === 'satellite') {
             busSharedState.mapStyle = message.style;
         }
     }

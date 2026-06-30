@@ -120,7 +120,7 @@ export class ControlEngine extends BusEngine<ControlStoreState> {
 
         if (message.type === 'screen/map-style') {
             const styleMessage = message as ScreenMapStyleMessage;
-            if (styleMessage.style === 'voyager' || styleMessage.style === 'satellite') {
+            if (styleMessage.style === 'topo' || styleMessage.style === 'satellite') {
                 this.store.setState((prev) => {
                     if (prev.mapStyle === styleMessage.style) return prev;
                     return { ...prev, mapStyle: styleMessage.style };
@@ -165,7 +165,7 @@ export class ControlEngine extends BusEngine<ControlStoreState> {
                 zoom: state.zoom
             };
             const nextMapStyle =
-                state.mapStyle === 'voyager' || state.mapStyle === 'satellite'
+                state.mapStyle === 'topo' || state.mapStyle === 'satellite'
                     ? state.mapStyle
                     : prev.mapStyle;
             return {

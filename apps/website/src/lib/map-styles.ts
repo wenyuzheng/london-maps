@@ -2,7 +2,7 @@ import type { StyleSpecification } from 'maplibre-gl';
 
 import type { MapStyleName } from './realtime/types';
 
-export const VOYAGER_STYLE = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
+export const DARK_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
 export const SATELLITE_STYLE: StyleSpecification = {
     version: 8,
@@ -20,5 +20,5 @@ export const SATELLITE_STYLE: StyleSpecification = {
 };
 
 export function resolveMapStyle(name: MapStyleName): string | StyleSpecification {
-    return name === 'satellite' ? SATELLITE_STYLE : VOYAGER_STYLE;
+    return name === 'satellite' ? SATELLITE_STYLE : DARK_STYLE;
 }

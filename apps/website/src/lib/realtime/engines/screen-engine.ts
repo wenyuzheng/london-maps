@@ -35,7 +35,7 @@ export class ScreenEngine extends BusEngine<ScreenStoreState> {
         }));
     }
 
-    setMapStyle(style: 'voyager' | 'satellite') {
+    setMapStyle(style: 'topo' | 'satellite') {
         this.store.setState((prev) => {
             if (prev.mapStyle === style) return prev;
             return { ...prev, mapStyle: style };
@@ -51,7 +51,7 @@ export class ScreenEngine extends BusEngine<ScreenStoreState> {
 
         if (message.type === 'screen/map-style') {
             const styleMessage = message as ScreenMapStyleMessage;
-            if (styleMessage.style === 'voyager' || styleMessage.style === 'satellite') {
+            if (styleMessage.style === 'topo' || styleMessage.style === 'satellite') {
                 this.setMapStyle(styleMessage.style);
             }
             return;
@@ -71,7 +71,7 @@ export class ScreenEngine extends BusEngine<ScreenStoreState> {
             view: { zoom: hello.state.zoom }
         });
         this.applySegmentSelection(hello.state.selectedSegmentIndexes);
-        if (hello.state.mapStyle === 'voyager' || hello.state.mapStyle === 'satellite') {
+        if (hello.state.mapStyle === 'topo' || hello.state.mapStyle === 'satellite') {
             this.setMapStyle(hello.state.mapStyle);
         }
     }
