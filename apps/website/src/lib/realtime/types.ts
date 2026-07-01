@@ -22,8 +22,9 @@ export type MapCity = 'london' | 'paris' | 'hong-kong' | 'munich';
 export type MapStyleName = 'topo' | 'satellite';
 
 export type BusSharedState = {
-    city: MapCity;
-    zoom: number;
+    // city: MapCity;
+    // zoom: number;
+    mapView: ScreenMapViewState;
     selectedSegmentIndexes: number[];
     mapStyle: MapStyleName;
 };

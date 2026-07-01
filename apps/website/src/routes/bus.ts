@@ -8,14 +8,18 @@ import type {
     ScreenMapViewMessage,
     ScreenSegmentSelectionMessage
 } from '../lib/realtime';
-import { isMapCity } from '../lib/realtime/map-cities';
 
 // In-memory bus state for this server process.
 // New clients receive this snapshot in the `hello` handshake so they can
 // join late without waiting for another control interaction.
 const busSharedState: BusSharedState = {
-    city: 'london',
-    zoom: 15.5,
+    mapView: {
+        longitude: -0.1749,
+        latitude: 51.4988,
+        zoom: 15.5,
+        bearing: 0,
+        pitch: 0
+    },
     selectedSegmentIndexes: [],
     mapStyle: 'satellite'
 };
@@ -71,13 +75,18 @@ const hooks = defineHooks({
 function updateBusSharedState(payload: Partial<BusMessage>) {
     if (payload.type === 'screen/map-view') {
         const message = payload as Partial<ScreenMapViewMessage>;
-        // Preserve last known valid city/zoom for hello-state replay.
-        if (isMapCity(message.city)) {
-            busSharedState.city = message.city;
-        }
-
-        if (typeof message.view?.zoom === 'number') {
-            busSharedState.zoom = message.view.zoom;
+        // Merge the full camera into the snapshot so a reconnecting client
+        // restores exactly where the view was, not just the city preset + zoom.
+        const view = message.view;
+        if (view && typeof view === 'object') {
+            const current = busSharedState.mapView;
+            busSharedState.mapView = {
+                longitude: typeof view.longitude === 'number' ? view.longitude : current.longitude,
+                latitude: typeof view.latitude === 'number' ? view.latitude : current.latitude,
+                zoom: typeof view.zoom === 'number' ? view.zoom : current.zoom,
+                bearing: typeof view.bearing === 'number' ? view.bearing : current.bearing,
+                pitch: typeof view.pitch === 'number' ? view.pitch : current.pitch
+            };
         }
         return;
     }

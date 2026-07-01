@@ -153,7 +153,7 @@ export class ControlEngine extends BusEngine<ControlStoreState> {
 
         // Rehydrate control UI from bus snapshot so newly opened tablets are immediately in sync.
         this.store.setState((prev) => {
-            const nextCity = state.city;
+            // const nextCity = state.city;
             const nextSelectedIndexes = Array.isArray(state.selectedSegmentIndexes)
                 ? state.selectedSegmentIndexes
                       .filter((value): value is number => Number.isInteger(value) && value >= 0)
@@ -161,8 +161,12 @@ export class ControlEngine extends BusEngine<ControlStoreState> {
                       .sort((a, b) => a - b)
                 : prev.selectedSegmentIndexes;
             const nextMapView: ScreenMapViewState = {
-                ...getCityMapView(nextCity),
-                zoom: state.zoom
+                // ...getCityMapView(nextCity),
+                zoom: state.mapView?.zoom ?? prev.currentMapView.zoom,
+                longitude: state.mapView?.longitude ?? prev.currentMapView.longitude,
+                latitude: state.mapView?.latitude ?? prev.currentMapView.latitude,
+                bearing: state.mapView?.bearing ?? prev.currentMapView.bearing,
+                pitch: state.mapView?.pitch ?? prev.currentMapView.pitch
             };
             const nextMapStyle =
                 state.mapStyle === 'topo' || state.mapStyle === 'satellite'
@@ -170,7 +174,7 @@ export class ControlEngine extends BusEngine<ControlStoreState> {
                     : prev.mapStyle;
             return {
                 ...prev,
-                selectedCity: nextCity,
+                // selectedCity: nextCity,
                 selectedSegmentIndexes: nextSelectedIndexes,
                 currentMapView: nextMapView,
                 mapStyle: nextMapStyle

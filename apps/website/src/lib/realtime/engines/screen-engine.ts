@@ -67,8 +67,14 @@ export class ScreenEngine extends BusEngine<ScreenStoreState> {
         if (!hello.state) return;
         this.applyMapViewMessage({
             type: 'screen/map-view',
-            city: hello.state.city,
-            view: { zoom: hello.state.zoom }
+            // city: hello.state.city,
+            view: {
+                zoom: hello.state.mapView.zoom,
+                longitude: hello.state.mapView.longitude,
+                latitude: hello.state.mapView.latitude,
+                bearing: hello.state.mapView.bearing,
+                pitch: hello.state.mapView.pitch
+            }
         });
         this.applySegmentSelection(hello.state.selectedSegmentIndexes);
         if (hello.state.mapStyle === 'topo' || hello.state.mapStyle === 'satellite') {
