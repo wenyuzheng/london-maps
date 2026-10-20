@@ -8,6 +8,12 @@ import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
     base: process.env.BASE_PATH ?? '/',
+    // A sandboxed /serve page has an opaque origin. Vite's dynamic preload
+    // helper uses anonymous requests, which omit the path-scoped demo cookie.
+    // Native import() inherits the credential mode of the module script.
+    build: {
+        modulePreload: process.env.BASE_PATH?.startsWith('/serve/') ? false : undefined
+    },
     resolve: {
         tsconfigPaths: true
     },

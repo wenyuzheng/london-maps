@@ -1,5 +1,6 @@
 import type { Store } from '@tanstack/react-store';
 
+import { appWebSocketUrl } from '../../vizzy-serve-client';
 import type { BusMessage, EngineRole, EngineStoreState, HelloBusMessage } from '../types';
 
 const RECONNECT_DELAY_MS = 1_500;
@@ -42,11 +43,7 @@ export abstract class BusEngine<TStoreState extends EngineStoreState = EngineSto
             lastError: null
         }));
 
-        // Match ws/wss to current page protocol.
-        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const basePath = import.meta.env.BASE_URL.replace(/\/$/, '') || '';
-        const url = `${protocol}://${window.location.host}${basePath}/bus`;
-        const socket = new WebSocket(url);
+        const socket = new WebSocket(appWebSocketUrl('/bus'));
         this.socket = socket;
 
         socket.onopen = () => {

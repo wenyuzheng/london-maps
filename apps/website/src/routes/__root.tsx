@@ -33,7 +33,7 @@ export const Route = createRootRouteWithContext()({
                 rel: 'icon',
                 href: 'data:,'
             },
-            { rel: 'stylesheet', href: appCss }
+            { rel: 'stylesheet', href: appCss, crossOrigin: 'use-credentials' }
         ]
     }),
     component: RootComponent
@@ -52,7 +52,7 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
     return (
         <html lang="en" suppressHydrationWarning>
             <head>
-                <HeadContent />
+                <HeadContent assetCrossOrigin="use-credentials" />
             </head>
             <body>
                 {/*
@@ -65,10 +65,18 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
                     even as routes change.
                 */}
                 <ScriptOnce>
-                    {`document.documentElement.classList.toggle(
-              'dark',
-              localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-          );`}
+                    {`(() => {
+              let storedTheme = null;
+              try {
+                  storedTheme = window.localStorage.getItem('theme');
+              } catch {
+                  storedTheme = null;
+              }
+              document.documentElement.classList.toggle(
+                  'dark',
+                  storedTheme === 'dark' || (storedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches)
+              );
+          })();`}
                 </ScriptOnce>
                 {/* ThemeProvider keeps theme state in sync across routes, tabs, and iframes. */}
                 <ThemeProvider>{children}</ThemeProvider>

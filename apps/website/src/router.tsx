@@ -12,7 +12,8 @@ export function getRouter() {
         defaultPreload: 'intent',
         defaultErrorComponent: DefaultCatchBoundary,
         defaultNotFoundComponent: DefaultNotFound,
-        scrollRestoration: true,
+        // Scroll restoration uses sessionStorage, which is unavailable in Vizzy's sandbox.
+        scrollRestoration: !basepath.startsWith('/serve/'),
         defaultStructuralSharing: true
     });
     return router;

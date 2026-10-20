@@ -6,6 +6,24 @@ const MEDIA = '(prefers-color-scheme: dark)';
 const isTheme = (value: unknown): value is Theme =>
     value === 'dark' || value === 'light' || value === 'system';
 
+function readStoredTheme(storageKey: string): Theme | null {
+    try {
+        const stored = window.localStorage.getItem(storageKey);
+        return isTheme(stored) ? stored : null;
+    } catch {
+        return null;
+    }
+}
+
+function saveTheme(storageKey: string, theme: Theme): void {
+    try {
+        if (theme === 'system') window.localStorage.removeItem(storageKey);
+        else window.localStorage.setItem(storageKey, theme);
+    } catch {
+        // Keep the selection in React state when the sandbox blocks storage.
+    }
+}
+
 type ThemeProviderProps = {
     children: React.ReactNode;
     defaultTheme?: Theme;
@@ -39,8 +57,7 @@ export function ThemeProvider({
     // handles pre-hydration class setup to avoid mismatches/flashes.
     const [theme, setTheme] = useState<Theme>(() => {
         if (typeof window === 'undefined') return defaultTheme;
-        const stored = localStorage.getItem(storageKey);
-        return isTheme(stored) ? stored : defaultTheme;
+        return readStoredTheme(storageKey) ?? defaultTheme;
     });
 
     const handleMediaQuery = useCallback(
@@ -72,12 +89,11 @@ export function ThemeProvider({
         let targetTheme: string;
 
         if (theme === 'system') {
-            localStorage.removeItem(storageKey);
             targetTheme = window.matchMedia(MEDIA).matches ? 'dark' : 'light';
         } else {
-            localStorage.setItem(storageKey, theme);
             targetTheme = theme;
         }
+        saveTheme(storageKey, theme);
 
         // Keep DOM writes minimal; classList operations can trigger style recalculation.
         // Only update if the target theme is not already applied
